@@ -1,13 +1,16 @@
+import { signInWithRedirect, signOut } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import {
   Body,
   Button,
   Card,
   Chip,
+  ErrorNote,
   Field,
   LoadingScreen,
   Overline,
@@ -18,8 +21,9 @@ import {
   Sub,
   Tiny,
 } from '@/components/ui';
-import { signOut } from 'aws-amplify/auth';
 
+import { useAuth } from '@/lib/auth';
+import { dataFor } from '@/lib/data';
 import { ensureNotificationPermission, rescheduleReminders } from '@/lib/notifications';
 import { fetchAllDataAsJson, useProfile, useUpsertProfile } from '@/lib/queries';
 import { colors, font, sp } from '@/lib/theme';
@@ -33,6 +37,7 @@ export default function SettingsScreen() {
 
 function SettingsForm({ profile }: { profile: Profile }) {
   const router = useRouter();
+  const { userId } = useAuth();
   const upsert = useUpsertProfile();
   const [name, setName] = useState(profile.display_name ?? '');
   const [exporting, setExporting] = useState(false);
@@ -63,7 +68,7 @@ function SettingsForm({ profile }: { profile: Profile }) {
   const exportData = async () => {
     setExporting(true);
     try {
-      const json = await fetchAllDataAsJson();
+      const json = await fetchAllDataAsJson(dataFor(userId));
       await Clipboard.setStringAsync(json);
       Alert.alert('Copied', 'Your entire journal is on the clipboard as JSON. Paste it somewhere safe.');
     } catch (e: any) {
@@ -80,6 +85,8 @@ function SettingsForm({ profile }: { profile: Profile }) {
         <Button label="Done" small onPress={() => router.back()} />
       </Row>
       <Spacer h={5} />
+
+      <AccountCard />
 
       <Field
         label="Your name"
@@ -109,7 +116,6 @@ function SettingsForm({ profile }: { profile: Profile }) {
           <View style={{ flex: 1, marginRight: sp(3) }}>
             <Body style={{ fontFamily: font.sansSemi }}>Daily reminders</Body>
             <Tiny style={{ marginTop: sp(0.5) }}>
-
               Morning commit, evening close, weekly plan. Requires a development build for full
               support (limited in Expo Go).
             </Tiny>
@@ -170,21 +176,108 @@ function SettingsForm({ profile }: { profile: Profile }) {
 
       <Spacer h={2} />
       <Button label="Copy all data as JSON" kind="ghost" onPress={exportData} loading={exporting} />
-      <Spacer h={2} />
-      <Button
-        label="Sign out"
-        kind="danger"
-        onPress={() =>
-          Alert.alert('Sign out?', 'Your data stays safe in your AWS backend.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
-          ])
-        }
-      />
       <Spacer h={4} />
       <Sub style={{ textAlign: 'center' }}>
-        Identity Compound · your data lives in your own AWS account.
+        {userId
+          ? 'Identity Compound · synced to your own AWS account.'
+          : 'Identity Compound · your journal lives on this phone.'}
       </Sub>
     </Screen>
   );
 }
+
+/**
+ * Sign-in is optional. Signed out, the journal is phone-local; signing in
+ * with Apple migrates it into the user's own backend and keeps it synced.
+ */
+function AccountCard() {
+  const { userId } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // signInWithRedirect resolves when the browser sheet opens; real failures
+  // (cancelled, provider errors) arrive as Hub events.
+  useEffect(() => {
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signInWithRedirect_failure') {
+        setBusy(false);
+        setError('Apple sign-in did not complete. Please try again.');
+      }
+      if (payload.event === 'signedIn') setBusy(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const signIn = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await signInWithRedirect({ provider: 'Apple' });
+      // The root layout migrates local data and switches backends on success.
+    } catch (e: unknown) {
+      setBusy(false);
+      const msg = e instanceof Error ? e.message : 'Something went wrong.';
+      // Re-tapping while a flow is pending is not an error worth showing.
+      if (!/already.*in progress/i.test(msg)) setError(msg);
+    }
+  };
+
+  if (userId) {
+    return (
+      <Card>
+        <Body style={{ fontFamily: font.sansSemi }}>Syncing with Apple</Body>
+        <Tiny style={{ marginTop: sp(0.5) }}>
+          Your journal is backed up to your own AWS account and follows you across devices.
+        </Tiny>
+        <Spacer h={3} />
+        <Button
+          label="Sign out"
+          kind="outline"
+          onPress={() =>
+            Alert.alert(
+              'Sign out?',
+              'Your journal stays safe in your account. This phone starts a fresh local journal that won’t sync.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+              ],
+            )
+          }
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <Body style={{ fontFamily: font.sansSemi }}>This journal lives on this phone</Body>
+      <Tiny style={{ marginTop: sp(0.5) }}>
+        Sign in with Apple to sync it — everything here moves into your account the moment you do.
+      </Tiny>
+      <Spacer h={3} />
+      <ErrorNote message={error} />
+      <Pressable
+        onPress={signIn}
+        disabled={busy}
+        style={({ pressed }) => [s.appleButton, (pressed || busy) && { opacity: 0.7 }]}
+      >
+        <Text style={s.appleLogo}>{Platform.OS === 'ios' ? '' : '🍎'}</Text>
+        <Text style={s.appleLabel}>{busy ? 'Opening…' : 'Sign in with Apple'}</Text>
+      </Pressable>
+    </Card>
+  );
+}
+
+const s = StyleSheet.create({
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: sp(3.25),
+    gap: sp(2),
+  },
+  appleLogo: { fontSize: 17, color: '#000000', marginTop: -2 },
+  appleLabel: { fontFamily: font.sansSemi, fontSize: 15.5, color: '#000000' },
+});

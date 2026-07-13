@@ -1,7 +1,7 @@
 import { colors } from './theme';
 
 /**
- * The three compounding accounts of a life, seeded silently on first sign-in.
+ * The three compounding accounts of a life, seeded silently on first launch.
  * Identity, vision and anti-vision start empty — written in Compass whenever
  * the user is ready.
  */

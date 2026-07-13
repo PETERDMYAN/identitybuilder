@@ -14,6 +14,11 @@ export const auth = defineAuth({
         keyId: secret('SIWA_KEY_ID'),
         privateKey: secret('SIWA_PRIVATE_KEY'),
         teamId: secret('SIWA_TEAM_ID'),
+        // The pool requires the email attribute on every federated login, so
+        // Apple must be asked for it — without this scope Apple never includes
+        // the email claim and Cognito rejects the sign-in ("attribute emails
+        // is required").
+        scopes: ['email', 'name'],
       },
       callbackUrls: ['identitybuilder://'],
       logoutUrls: ['identitybuilder://'],

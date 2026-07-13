@@ -11,16 +11,18 @@ import {
 } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { LoadingScreen } from '@/components/ui';
 import { useAuth, SessionProvider } from '@/lib/auth';
+import { dataFor } from '@/lib/data';
 import { rescheduleReminders } from '@/lib/notifications';
 import { qk, useProfile } from '@/lib/queries';
 import { bootstrapAccount } from '@/lib/setup';
+import { syncLocalToCloud } from '@/lib/sync';
 import { colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -59,22 +61,64 @@ export default function RootLayout() {
 }
 
 /**
- * Routes by session: signed out → sign-in; otherwise straight into the app.
- * First sign-in bootstraps the profile and default accounts silently —
- * there is no onboarding.
+ * No sign-in wall: the app opens straight into Today. Signed out, the journal
+ * lives on this phone; signing in (from Settings) migrates it into the account
+ * and keeps it synced. This component only manages the switch between those
+ * two backends.
  */
 function Gate() {
   const { userId, loading } = useAuth();
+  const qc = useQueryClient();
+  const [switching, setSwitching] = useState(false);
+  const prev = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (loading) return;
+    const p = prev.current;
+    prev.current = userId;
+    if (p === undefined) {
+      // Cold start. If a previous sign-in sync was interrupted, quietly finish
+      // moving the leftover local journal into the account.
+      if (userId) {
+        syncLocalToCloud()
+          .then((moved) => {
+            if (moved) qc.invalidateQueries();
+          })
+          .catch(() => {});
+      }
+      return;
+    }
+    if (p === userId) return;
+    // Signed in or out. Migrate the phone journal up on sign-in, then start
+    // the new mode with a clean cache either way.
+    (async () => {
+      setSwitching(true);
+      try {
+        if (userId) await syncLocalToCloud();
+      } catch {
+        // Local data stays put; the next cold start retries.
+      }
+      qc.clear();
+      setSwitching(false);
+    })();
+  }, [userId, loading, qc]);
+
+  if (loading || switching) return <LoadingScreen />;
+  return <Ready key={userId ?? 'local'} />;
+}
+
+function Ready() {
+  const { userId } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const segments = useSegments();
-  const router = useRouter();
   const qc = useQueryClient();
   const bootstrapping = useRef(false);
 
+  // First launch in either mode: silently create the profile and default
+  // accounts — there is no onboarding.
   useEffect(() => {
-    if (!userId || profileLoading || profile || bootstrapping.current) return;
+    if (profileLoading || profile || bootstrapping.current) return;
     bootstrapping.current = true;
-    bootstrapAccount()
+    bootstrapAccount(dataFor(userId))
       .then((p) => {
         qc.setQueryData(qk.profile, p);
         qc.invalidateQueries({ queryKey: qk.domains });
@@ -84,22 +128,12 @@ function Gate() {
       });
   }, [userId, profileLoading, profile, qc]);
 
-  useEffect(() => {
-    if (loading) return;
-    const inSignIn = (segments[0] as string | undefined) === 'sign-in';
-    if (!userId) {
-      if (!inSignIn) router.replace('/sign-in');
-    } else if (inSignIn) {
-      router.replace('/');
-    }
-  }, [userId, loading, segments, router]);
-
   // Keep local reminders in sync with saved settings.
   useEffect(() => {
     if (profile?.reminders_enabled) rescheduleReminders(profile);
   }, [profile?.reminders_enabled, profile?.morning_time, profile?.evening_time]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading || (userId && !profile)) return <LoadingScreen />;
+  if (!profile) return <LoadingScreen />;
 
   return (
     <Stack
@@ -109,7 +143,6 @@ function Gate() {
       }}
     >
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="sign-in" />
       <Stack.Screen name="reflect-weekly" options={{ presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
       <Stack.Screen name="urge/[id]" options={{ presentation: 'modal' }} />

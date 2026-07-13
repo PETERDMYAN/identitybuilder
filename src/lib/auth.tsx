@@ -37,10 +37,3 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
-
-/** For screens behind the auth gate, where a signed-in user is guaranteed. */
-export function useUserId(): string {
-  const { userId } = useAuth();
-  if (!userId) throw new Error('useUserId called outside an authenticated screen');
-  return userId;
-}
