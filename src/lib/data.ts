@@ -3,7 +3,15 @@ import { useMemo } from 'react';
 import { useAuth } from './auth';
 import { cloudData } from './cloud';
 import { localData } from './local';
-import { DailyEntry, DailyItem, Domain, LifeGoal, Profile, WeeklyReflection } from './types';
+import {
+  DailyEntry,
+  DailyItem,
+  Domain,
+  LifeGoal,
+  Profile,
+  UrgeEvent,
+  WeeklyReflection,
+} from './types';
 
 /**
  * One storage API, two homes for the journal:
@@ -35,6 +43,12 @@ export type DataAPI = {
   ): Promise<DailyItem>;
   updateItem(id: string, fields: Omit<Partial<DailyItem>, 'id'>): Promise<void>;
   deleteItem(id: string): Promise<void>;
+
+  /** `range` is inclusive on both ends ('YYYY-MM-DD'). */
+  listUrgeEvents(range?: { from: string; to: string }): Promise<UrgeEvent[]>;
+  createUrgeEvent(
+    fields: Omit<Partial<UrgeEvent>, 'id'> & { date: string; urge_id: string },
+  ): Promise<UrgeEvent>;
 
   listEntries(): Promise<DailyEntry[]>;
   getEntry(date: string): Promise<DailyEntry | null>;

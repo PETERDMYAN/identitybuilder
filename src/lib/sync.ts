@@ -17,6 +17,7 @@ export async function syncLocalToCloud(): Promise<boolean> {
     !snap.domains.length &&
     !snap.goals.length &&
     !snap.items.length &&
+    !snap.urges.length &&
     !snap.entries.length &&
     !snap.reflections.length;
   if (empty) return false;
@@ -53,13 +54,15 @@ export async function syncLocalToCloud(): Promise<boolean> {
   }
   const mapDomain = (id: string | null) => (id ? (domainIdMap.get(id) ?? null) : null);
 
-  const [cloudGoals, cloudItems, cloudEntries, cloudReflections, cloudProfile] = await Promise.all([
-    cloudData.listGoals(),
-    cloudData.listItems(),
-    cloudData.listEntries(),
-    cloudData.listReflections(),
-    cloudData.getProfile(),
-  ]);
+  const [cloudGoals, cloudItems, cloudUrges, cloudEntries, cloudReflections, cloudProfile] =
+    await Promise.all([
+      cloudData.listGoals(),
+      cloudData.listItems(),
+      cloudData.listUrgeEvents(),
+      cloudData.listEntries(),
+      cloudData.listReflections(),
+      cloudData.getProfile(),
+    ]);
 
   for (const g of snap.goals) {
     if (!cloudGoals.some((c) => c.title === g.title)) {
@@ -81,6 +84,20 @@ export async function syncLocalToCloud(): Promise<boolean> {
         domain_id: mapDomain(i.domain_id),
         done: i.done,
         sort_order: i.sort_order,
+      });
+    }
+  }
+
+  for (const u of snap.urges) {
+    const dup = cloudUrges.some(
+      (c) => c.date === u.date && c.urge_id === u.urge_id && c.created_at === u.created_at,
+    );
+    if (!dup) {
+      await cloudData.createUrgeEvent({
+        date: u.date,
+        urge_id: u.urge_id,
+        note: u.note,
+        created_at: u.created_at,
       });
     }
   }

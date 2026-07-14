@@ -3,7 +3,15 @@ import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { DataAPI } from './data';
-import { DailyEntry, DailyItem, Domain, LifeGoal, Profile, WeeklyReflection } from './types';
+import {
+  DailyEntry,
+  DailyItem,
+  Domain,
+  LifeGoal,
+  Profile,
+  UrgeEvent,
+  WeeklyReflection,
+} from './types';
 
 /**
  * The signed-out backend: the whole journal as six JSON collections in
@@ -15,6 +23,7 @@ const K = {
   domains: 'ic.local.domains',
   goals: 'ic.local.goals',
   items: 'ic.local.items',
+  urges: 'ic.local.urges',
   entries: 'ic.local.entries',
   reflections: 'ic.local.reflections',
 } as const;
@@ -164,6 +173,20 @@ export const localData: DataAPI = {
     return remove(K.items, id);
   },
 
+  async listUrgeEvents(range) {
+    const rows = await read<UrgeEvent>(K.urges);
+    return range ? rows.filter((u) => u.date >= range.from && u.date <= range.to) : rows;
+  },
+  createUrgeEvent(fields) {
+    return insert<UrgeEvent>(K.urges, {
+      id: newId(),
+      date: fields.date,
+      urge_id: fields.urge_id,
+      note: fields.note ?? '',
+      created_at: fields.created_at ?? null,
+    });
+  },
+
   listEntries() {
     return read<DailyEntry>(K.entries);
   },
@@ -234,20 +257,22 @@ export type LocalSnapshot = {
   domains: Domain[];
   goals: LifeGoal[];
   items: DailyItem[];
+  urges: UrgeEvent[];
   entries: DailyEntry[];
   reflections: WeeklyReflection[];
 };
 
 export async function localSnapshot(): Promise<LocalSnapshot> {
-  const [profiles, domains, goals, items, entries, reflections] = await Promise.all([
+  const [profiles, domains, goals, items, urges, entries, reflections] = await Promise.all([
     read<Profile>(K.profile),
     read<Domain>(K.domains),
     read<LifeGoal>(K.goals),
     read<DailyItem>(K.items),
+    read<UrgeEvent>(K.urges),
     read<DailyEntry>(K.entries),
     read<WeeklyReflection>(K.reflections),
   ]);
-  return { profile: profiles[0] ?? null, domains, goals, items, entries, reflections };
+  return { profile: profiles[0] ?? null, domains, goals, items, urges, entries, reflections };
 }
 
 export function clearLocalData(): Promise<void> {

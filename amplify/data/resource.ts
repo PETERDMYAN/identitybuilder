@@ -56,6 +56,20 @@ const schema = a.schema({
     })
     .authorization((allow) => [allow.owner()]),
 
+  /**
+   * One completed urge flow (Today → "Right now"): the moment a craving,
+   * irritation, worry, boredom or bedtime resistance was met with a pause
+   * instead of a reaction. Catching it is the win — so it gets recorded.
+   */
+  UrgeEvent: a
+    .model({
+      date: a.date().required(), // 'YYYY-MM-DD'
+      urge_id: a.string().required(), // matches lib/urges.ts ids
+      note: a.string(), // what the user named, if anything
+      created_at: a.datetime(),
+    })
+    .authorization((allow) => [allow.owner()]),
+
   DailyEntry: a
     .model({
       date: a.date().required(),

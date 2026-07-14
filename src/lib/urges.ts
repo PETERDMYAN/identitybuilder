@@ -17,6 +17,8 @@ export type UrgeStep = {
 export type Urge = {
   id: string;
   label: string;
+  /** Short noun for charts and summaries ("Hunger", "Anxiety"). */
+  noun: string;
   emoji: string;
   color: string;
   /** Used for `{thing}` when the user doesn't type anything. */
@@ -27,6 +29,7 @@ export type Urge = {
 export const URGES: Urge[] = [
   {
     id: 'hungry',
+    noun: 'Hunger',
     label: 'I am hungry',
     emoji: '🥣',
     color: colors.health,
@@ -57,6 +60,7 @@ export const URGES: Urge[] = [
   },
   {
     id: 'annoyed',
+    noun: 'Annoyance',
     label: 'I find … annoying',
     emoji: '😤',
     color: colors.decay,
@@ -88,6 +92,7 @@ export const URGES: Urge[] = [
   },
   {
     id: 'anxious',
+    noun: 'Anxiety',
     label: 'I am anxious about …',
     emoji: '🌊',
     color: colors.knowledge,
@@ -119,6 +124,7 @@ export const URGES: Urge[] = [
   },
   {
     id: 'bored',
+    noun: 'Boredom',
     label: 'It’s boring to do …',
     emoji: '🥱',
     color: colors.accentBright,
@@ -149,6 +155,7 @@ export const URGES: Urge[] = [
   },
   {
     id: 'sleep',
+    noun: 'Bedtime',
     label: 'I don’t want to sleep',
     emoji: '🌙',
     color: colors.accent,

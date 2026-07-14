@@ -45,6 +45,15 @@ export type DailyItem = {
   sort_order: number;
 };
 
+/** One completed urge flow — the pause got taken, so it gets counted. */
+export type UrgeEvent = {
+  id: string;
+  date: string; // 'YYYY-MM-DD'
+  urge_id: string; // matches lib/urges.ts ids
+  note: string; // what the user named, if anything
+  created_at: string | null; // ISO timestamp
+};
+
 export type DailyEntry = {
   id: string;
   date: string; // 'YYYY-MM-DD'

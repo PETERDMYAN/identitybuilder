@@ -36,6 +36,7 @@ import {
   useProfile,
   useToggleDailyItem,
   useUpsertDailyEntry,
+  useUrgeEvents,
 } from '@/lib/queries';
 import { colors, font, radius, sp } from '@/lib/theme';
 import { DailyItem, Domain } from '@/lib/types';
@@ -51,6 +52,7 @@ export default function TodayScreen() {
   const { data: items, isLoading } = useDailyItems(today);
   const { data: entry } = useDailyEntry(today);
   const { data: bundle } = useGrowthBundle();
+  const { data: urgesToday = [] } = useUrgeEvents(today, today);
 
   const addItem = useAddDailyItem();
   const toggleItem = useToggleDailyItem();
@@ -61,6 +63,14 @@ export default function TodayScreen() {
   const dos = useMemo(() => (items ?? []).filter((i) => i.kind === 'do'), [items]);
   const donts = useMemo(() => (items ?? []).filter((i) => i.kind === 'dont'), [items]);
   const doneToday = (items ?? []).filter((i) => i.done).length;
+
+  const urgeSummary = URGES.map((u) => ({
+    emoji: u.emoji,
+    n: urgesToday.filter((e) => e.urge_id === u.id).length,
+  }))
+    .filter((x) => x.n > 0)
+    .map((x) => (x.n > 1 ? `${x.emoji}×${x.n}` : x.emoji))
+    .join('  ');
 
   const streak = bundle?.growth.streak ?? 0;
   const committed = !!entry?.committed_at;
@@ -176,6 +186,9 @@ export default function TodayScreen() {
               <Overline>Day closed</Overline>
               <RatingDots value={entry?.alignment ?? null} onChange={() => setCloseOpen(true)} />
             </Row>
+            {urgeSummary ? (
+              <Tiny style={{ marginTop: sp(2) }}>Urges caught today: {urgeSummary}</Tiny>
+            ) : null}
             {entry?.reflection ? <Text style={s.reflection}>“{entry.reflection}”</Text> : null}
           </Card>
         ) : (
@@ -188,6 +201,7 @@ export default function TodayScreen() {
         visible={closeOpen}
         onClose={() => setCloseOpen(false)}
         keptToday={doneToday}
+        urgesCaught={urgesToday.length}
         initialAlignment={entry?.alignment ?? null}
         initialReflection={entry?.reflection ?? ''}
         onSave={(alignment, reflection) => {
@@ -317,6 +331,7 @@ function CloseDayModal({
   onClose,
   onSave,
   keptToday,
+  urgesCaught,
   initialAlignment,
   initialReflection,
 }: {
@@ -324,6 +339,7 @@ function CloseDayModal({
   onClose: () => void;
   onSave: (alignment: number | null, reflection: string) => void;
   keptToday: number;
+  urgesCaught: number;
   initialAlignment: number | null;
   initialReflection: string;
 }) {
@@ -345,7 +361,8 @@ function CloseDayModal({
       <View style={s.sheet}>
         <Serif>Close the day</Serif>
         <Sub style={{ marginTop: sp(1) }}>
-          {keptToday} kept today. Evidence recorded either way.
+          {keptToday} kept{urgesCaught > 0 ? ` · ${urgesCaught} urge${urgesCaught === 1 ? '' : 's'} caught` : ''} today.
+          Evidence recorded either way.
         </Sub>
         <Spacer h={4} />
         <Body style={{ fontFamily: font.sansSemi, marginBottom: sp(2) }}>

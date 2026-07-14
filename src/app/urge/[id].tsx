@@ -14,6 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Button, Overline, Row, Screen, Serif, Spacer, Tiny } from '@/components/ui';
+import { todayStr } from '@/lib/dates';
+import { useLogUrgeEvent } from '@/lib/queries';
 import { colors, font, radius, sp } from '@/lib/theme';
 import { URGES } from '@/lib/urges';
 
@@ -24,9 +26,16 @@ export default function UrgeScreen() {
 
   const [step, setStep] = useState(0);
   const [thing, setThing] = useState('');
+  const logUrge = useLogUrgeEvent();
+
+  // Falls back to Today when there's no stack to pop (e.g. opened by URL).
+  const close = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
 
   useEffect(() => {
-    if (!urge) router.back();
+    if (!urge) router.replace('/');
   }, [urge, router]);
   if (!urge) return null;
 
@@ -38,7 +47,9 @@ export default function UrgeScreen() {
   const next = () => {
     if (last) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      router.back();
+      // The pause got taken — record it for the day's close and the week view.
+      logUrge.mutate({ date: todayStr(), urgeId: urge.id, note: thing });
+      close();
     } else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       setStep(step + 1);
@@ -56,7 +67,7 @@ export default function UrgeScreen() {
             />
           ))}
         </Row>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Pressable onPress={close} hitSlop={10}>
           <Ionicons name="close" size={22} color={colors.muted} />
         </Pressable>
       </Row>

@@ -1,6 +1,14 @@
 import { db, listAll, must } from './amplify';
 import type { DataAPI } from './data';
-import { DailyEntry, DailyItem, Domain, LifeGoal, Profile, WeeklyReflection } from './types';
+import {
+  DailyEntry,
+  DailyItem,
+  Domain,
+  LifeGoal,
+  Profile,
+  UrgeEvent,
+  WeeklyReflection,
+} from './types';
 
 /**
  * The signed-in backend: owner-scoped AppSync models. Normalizers collapse
@@ -43,6 +51,13 @@ const nItem = (r: any): DailyItem => ({
   domain_id: r.domain_id ?? null,
   done: r.done ?? false,
   sort_order: r.sort_order ?? 0,
+});
+const nUrge = (r: any): UrgeEvent => ({
+  id: r.id,
+  date: r.date,
+  urge_id: r.urge_id,
+  note: r.note ?? '',
+  created_at: r.created_at ?? null,
 });
 const nEntry = (r: any): DailyEntry => ({
   id: r.id,
@@ -140,6 +155,27 @@ export const cloudData: DataAPI = {
   },
   async deleteItem(id) {
     must(await db().models.DailyItem.delete({ id }));
+  },
+
+  async listUrgeEvents(range) {
+    const filter = !range
+      ? undefined
+      : range.from === range.to
+        ? { date: { eq: range.from } }
+        : { date: { between: [range.from, range.to] } };
+    const rows = await listAll((o) => db().models.UrgeEvent.list(o), filter);
+    return rows.map(nUrge);
+  },
+  async createUrgeEvent(fields) {
+    const { note, created_at, ...rest } = fields;
+    return nUrge(
+      must(
+        await db().models.UrgeEvent.create({
+          ...rest,
+          ...withoutNullish({ note, created_at }),
+        }),
+      ),
+    );
   },
 
   async listEntries() {

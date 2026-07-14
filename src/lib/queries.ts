@@ -9,6 +9,7 @@ import {
   Domain,
   LifeGoal,
   Profile,
+  UrgeEvent,
   WeeklyReflection,
 } from './types';
 
@@ -18,6 +19,7 @@ export const qk = {
   goals: ['goals'] as const,
   items: (date: string) => ['items', date] as const,
   weekItems: (week: string) => ['weekItems', week] as const,
+  urges: (from: string, to: string) => ['urges', from, to] as const,
   entry: (date: string) => ['entry', date] as const,
   reflection: (week: string) => ['reflection', week] as const,
   growth: ['growth'] as const,
@@ -226,6 +228,33 @@ export function useDeleteDailyItem() {
   });
 }
 
+// ---------- urge events ----------
+
+/** Completed urge flows in an inclusive date range (single day: from === to). */
+export function useUrgeEvents(from: DateStr, to: DateStr) {
+  const data = useData();
+  return useQuery({
+    queryKey: qk.urges(from, to),
+    queryFn: (): Promise<UrgeEvent[]> => data.listUrgeEvents({ from, to }),
+  });
+}
+
+export function useLogUrgeEvent() {
+  const data = useData();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { date: DateStr; urgeId: string; note: string }) => {
+      return data.createUrgeEvent({
+        date: input.date,
+        urge_id: input.urgeId,
+        note: input.note.trim(),
+        created_at: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['urges'] }),
+  });
+}
+
 // ---------- daily entries ----------
 
 export function useDailyEntry(date: DateStr) {
@@ -305,11 +334,12 @@ export function useGrowthBundle() {
 // ---------- data export ----------
 
 export async function fetchAllDataAsJson(api: DataAPI): Promise<string> {
-  const [profile, domains, goals, items, entries, reflections] = await Promise.all([
+  const [profile, domains, goals, items, urges, entries, reflections] = await Promise.all([
     api.getProfile(),
     api.listDomains({ includeArchived: true }),
     api.listGoals(),
     api.listItems(),
+    api.listUrgeEvents(),
     api.listEntries(),
     api.listReflections(),
   ]);
@@ -320,6 +350,7 @@ export async function fetchAllDataAsJson(api: DataAPI): Promise<string> {
       domains,
       life_goals: goals,
       daily_items: items,
+      urge_events: urges,
       daily_entries: entries,
       weekly_reflections: reflections,
     },

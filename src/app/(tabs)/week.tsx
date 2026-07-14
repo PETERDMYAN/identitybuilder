@@ -16,14 +16,16 @@ import {
   Title,
 } from '@/components/ui';
 import { fmtMultiplier } from '@/lib/compound';
-import { fmtShort, fmtWeekRange, todayStr, weekDates, weekdayLetter } from '@/lib/dates';
+import { addDaysStr, fmtShort, fmtWeekRange, todayStr, weekDates, weekdayLetter } from '@/lib/dates';
 import {
   useCurrentWeekStart,
   useGrowthBundle,
+  useUrgeEvents,
   useWeekItems,
   useWeeklyReflection,
 } from '@/lib/queries';
 import { colors, font, sp } from '@/lib/theme';
+import { URGES } from '@/lib/urges';
 
 export default function WeekScreen() {
   const router = useRouter();
@@ -33,6 +35,7 @@ export default function WeekScreen() {
   const { data: items, isLoading } = useWeekItems(week);
   const { data: reflection } = useWeeklyReflection(week);
   const { data: bundle } = useGrowthBundle();
+  const { data: weekUrges = [] } = useUrgeEvents(week, addDaysStr(week, 6));
 
   const days = useMemo(() => {
     const byDate = new Map<string, { total: number; done: number }>();
@@ -47,6 +50,30 @@ export default function WeekScreen() {
 
   const total = (items ?? []).length;
   const kept = (items ?? []).filter((i) => i.done).length;
+
+  // Days whose evening check-in happened (matches Today's "day closed").
+  const closedDates = useMemo(() => {
+    const closed = new Set<string>();
+    bundle?.entriesByDate.forEach((e, date) => {
+      if (e.alignment != null || e.reflection.trim() !== '') closed.add(date);
+    });
+    return closed;
+  }, [bundle]);
+
+  const urgeDays = useMemo(() => {
+    const byDate = new Map<string, number>();
+    for (const u of weekUrges) byDate.set(u.date, (byDate.get(u.date) ?? 0) + 1);
+    return weekDates(week).map((date) => ({ date, count: byDate.get(date) ?? 0 }));
+  }, [weekUrges, week]);
+
+  const urgeTotals = useMemo(
+    () =>
+      URGES.map((u) => ({
+        urge: u,
+        count: weekUrges.filter((e) => e.urge_id === u.id).length,
+      })).filter((t) => t.count > 0),
+    [weekUrges],
+  );
 
   const pastWeeks = useMemo(() => {
     const life = bundle?.growth.life ?? [];
@@ -90,13 +117,71 @@ export default function WeekScreen() {
                 >
                   <Text style={s.dayCount}>{d.total ? `${d.done}/${d.total}` : '·'}</Text>
                 </View>
+                <View
+                  style={[
+                    s.checkinDot,
+                    closedDates.has(d.date) && { backgroundColor: colors.green },
+                  ]}
+                />
               </View>
             );
           })}
         </Row>
         <Tiny style={{ marginTop: sp(2.5) }}>
-          Set each day's do's and don'ts on Today — this is the week they add up to.
+          Set each day's do's and don'ts on Today — this is the week they add up to. A green dot
+          means you closed that day.
         </Tiny>
+      </Card>
+
+      <Card>
+        <Row between>
+          <Overline>Urges caught</Overline>
+          <Sub>{weekUrges.length || '—'}</Sub>
+        </Row>
+        {weekUrges.length > 0 ? (
+          <>
+            <Row between style={{ marginTop: sp(3.5) }}>
+              {urgeDays.map((d) => {
+                const isToday = d.date === today;
+                const future = d.date > today;
+                return (
+                  <View key={d.date} style={[s.dayCell, future && { opacity: 0.35 }]}>
+                    <Tiny style={isToday ? { color: colors.text } : undefined}>
+                      {weekdayLetter(d.date)}
+                    </Tiny>
+                    <View
+                      style={[
+                        s.dayBubble,
+                        d.count > 0 && {
+                          backgroundColor: colors.accentFaint,
+                          borderColor: colors.accentBright,
+                        },
+                      ]}
+                    >
+                      <Text style={s.dayCount}>{d.count || '·'}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </Row>
+            <Row style={{ flexWrap: 'wrap', marginTop: sp(3), gap: sp(1.5) }}>
+              {urgeTotals.map(({ urge, count }) => (
+                <View key={urge.id} style={[s.urgePill, { borderColor: `${urge.color}55` }]}>
+                  <Text style={s.urgePillText}>
+                    {urge.emoji} {urge.noun} ×{count}
+                  </Text>
+                </View>
+              ))}
+            </Row>
+            <Tiny style={{ marginTop: sp(2.5) }}>
+              Every pause taken instead of a reaction. Catching the urge is the win.
+            </Tiny>
+          </>
+        ) : (
+          <Sub style={{ marginTop: sp(1.5) }}>
+            None caught yet — the buttons on Today are there when one hits.
+          </Sub>
+        )}
       </Card>
 
       {reflection ? (
@@ -164,6 +249,15 @@ const s = StyleSheet.create({
     paddingHorizontal: 4,
   },
   dayCount: { fontFamily: font.sansMed, fontSize: 10.5, color: colors.sub },
+  checkinDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: 'transparent' },
+  urgePill: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: sp(1.25),
+    paddingHorizontal: sp(2.5),
+    backgroundColor: colors.raised,
+  },
+  urgePillText: { fontFamily: font.sansMed, fontSize: 12, color: colors.text },
   quote: {
     fontFamily: font.serifItalic,
     fontSize: 14.5,
