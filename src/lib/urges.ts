@@ -40,36 +40,33 @@ export const URGES: Urge[] = [
     emoji: '🥣',
     color: colors.health,
     fallback: 'it',
+    // Peter's 4-step resolution: identify the acute mood → re-observe it as
+    // raw sensation until it turns neutral → acknowledge and appreciate it
+    // because it was chosen → the identity it serves.
     steps: [
       {
-        overline: 'Notice',
-        text: 'Pause. Where is this hunger — stomach, mouth, or mind? Real hunger sits low and grows slowly. Cravings spark high and shout.',
+        overline: 'Identify',
+        text: 'What exactly is here right now? Hunger, a mood, restlessness dressed as appetite? Point at the acute feeling and name it.',
       },
       {
-        overline: 'Remember',
-        text: 'A day done right holds a stretch of hunger and a stretch out of breath. You planned to feel this. If this is that stretch, nothing is wrong — it’s working.',
-      },
-      {
-        overline: 'Breathe',
+        overline: 'Observe',
         breath: true,
-        text: 'Three slow breaths. An urge is a wave — it rises, crests, and passes whether you feed it or not.',
+        text: 'Drop the story and re-observe it as pure sensation — its place, its size, its texture. Watched closely, it breaks into small flickers, and the flickers turn neutral.',
       },
       {
-        overline: 'The fork',
+        overline: 'Appreciate',
+        text: 'Acknowledge it — it’s real. Then appreciate it: you chose this hunger, and it’s meaningful to you. Discomfort you chose is training, not suffering.',
+      },
+      {
+        overline: 'The identity',
         identity: {
           domain: 'Health',
-          vision: 'Lean, light, disciplined — hunger is a tool you use, not a voice you obey.',
-          antiVision: 'Never empty, always fed — softer every season, appetite in charge.',
+          vision:
+            'Healthy, high-energy, vegetarian — 68 kg, 13% body fat. I chose it, it’s meaningful to me. That’s my advantage.',
+          antiVision:
+            'The drift: fed on every mood, low energy — and the heart disease in the pressure gets its opening.',
         },
-        text: 'Two versions of you are at this fork. This moment feeds one of them.',
-      },
-      {
-        overline: 'Choose',
-        text: 'If a real meal is due, eat it slowly and enjoy every bite. If it isn’t time yet — water, stand up, move. Carry the hunger one more hour; it answers to you.',
-      },
-      {
-        overline: 'Return',
-        text: 'You felt it and didn’t flinch. Today has its hunger — and it obeyed you. Another vote for the person you’re becoming.',
+        text: 'This is who the hunger works for. Chosen. Meaningful. Your advantage.',
       },
     ],
   },
@@ -165,6 +162,41 @@ export const URGES: Urge[] = [
       {
         overline: 'Return',
         text: 'Do it slowly and completely. Full attention makes dull work feel like meditation.',
+      },
+    ],
+  },
+  {
+    id: 'indulge',
+    noun: 'Indulgence',
+    label: 'I am compelled to indulge in …',
+    emoji: '🌀',
+    color: colors.relationships,
+    fallback: 'it',
+    steps: [
+      {
+        overline: 'Identify',
+        prompt: 'What’s pulling you?',
+        text: 'Name the pull plainly. Compulsion works in the dark — naming it drags it into daylight.',
+      },
+      {
+        overline: 'Observe',
+        breath: true,
+        text: 'Drop the promise it’s making and re-observe the pull as pure sensation — its place, its size, its texture. Watched closely, it breaks into small flickers, and the flickers turn neutral.',
+      },
+      {
+        overline: 'Play the tape',
+        text: 'Acknowledge it without shame — pulls happen. But you didn’t choose this one. Run the tape forward: ten minutes after {thing}, how do you feel? Tomorrow morning? Only sign trades you’d sign twice.',
+      },
+      {
+        overline: 'The identity',
+        identity: {
+          domain: 'Life',
+          vision:
+            'Free and clear — someone who feels the pull, watches it pass, and owns the evening.',
+          antiVision:
+            'Owned by the pull — a little weaker every time it wins. And it keeps winning.',
+        },
+        text: 'Every pull that passes through you unfed is a rep. This is who the reps build.',
       },
     ],
   },
