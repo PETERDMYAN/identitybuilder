@@ -15,9 +15,9 @@ import Animated, {
 
 import { Button, Overline, Row, Screen, Serif, Spacer, Tiny } from '@/components/ui';
 import { todayStr } from '@/lib/dates';
-import { useLogUrgeEvent } from '@/lib/queries';
+import { useDomains, useLogUrgeEvent } from '@/lib/queries';
 import { colors, font, radius, sp } from '@/lib/theme';
-import { URGES } from '@/lib/urges';
+import { URGES, UrgeStep } from '@/lib/urges';
 
 export default function UrgeScreen() {
   const router = useRouter();
@@ -96,12 +96,40 @@ export default function UrgeScreen() {
               onSubmitEditing={next}
             />
           ) : null}
+
+          {current.identity ? <IdentityFork identity={current.identity} /> : null}
         </Animated.View>
       </View>
 
       <Button label={last ? 'Done' : 'Continue'} onPress={next} />
       <Spacer h={2} />
     </Screen>
+  );
+}
+
+/**
+ * The future-self / inversion fork. Shows the user's own vision and
+ * anti-vision (written in Compass) for the step's domain — their own words
+ * carry more weight than ours — falling back to stock lines until then.
+ */
+function IdentityFork({ identity }: { identity: NonNullable<UrgeStep['identity']> }) {
+  const { data: domains = [] } = useDomains();
+  const domain = domains.find(
+    (d) => d.name.trim().toLowerCase() === identity.domain.toLowerCase(),
+  );
+  const vision = domain?.vision.trim() || identity.vision;
+  const antiVision = domain?.anti_vision.trim() || identity.antiVision;
+  return (
+    <View style={{ marginTop: sp(5), gap: sp(2) }}>
+      <View style={[s.forkCard, s.forkVision]}>
+        <Overline style={{ color: colors.accentBright }}>Future self</Overline>
+        <Text style={s.forkText}>{vision}</Text>
+      </View>
+      <View style={[s.forkCard, s.forkInversion]}>
+        <Overline style={{ color: colors.decay }}>The inversion</Overline>
+        <Text style={s.forkText}>{antiVision}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -139,6 +167,27 @@ const s = StyleSheet.create({
   stepText: { fontSize: 23, lineHeight: 33, marginTop: sp(2.5) },
   breathWrap: { alignItems: 'center', marginTop: sp(9) },
   breathCircle: { width: 84, height: 84, borderRadius: 42, borderWidth: 1.5 },
+  forkCard: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: sp(3),
+    paddingHorizontal: sp(3.5),
+  },
+  forkVision: {
+    backgroundColor: colors.accentFaint,
+    borderColor: 'rgba(175, 137, 244, 0.35)',
+  },
+  forkInversion: {
+    backgroundColor: colors.decayFaint,
+    borderColor: 'rgba(194, 86, 78, 0.30)',
+  },
+  forkText: {
+    fontFamily: font.serifItalic,
+    fontSize: 15.5,
+    lineHeight: 23,
+    color: colors.text,
+    marginTop: sp(1.5),
+  },
   nameInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,

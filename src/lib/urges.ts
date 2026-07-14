@@ -12,6 +12,12 @@ export type UrgeStep = {
   breath?: boolean;
   /** Placeholder for an optional "name it" input on this step. */
   prompt?: string;
+  /**
+   * Show the future-self / inversion fork. Pulls the user's own vision and
+   * anti-vision from the named domain (written in Compass); the strings here
+   * are fallbacks until they've written their own.
+   */
+  identity?: { domain: string; vision: string; antiVision: string };
 };
 
 export type Urge = {
@@ -40,21 +46,30 @@ export const URGES: Urge[] = [
         text: 'Pause. Where is this hunger — stomach, mouth, or mind? Real hunger sits low and grows slowly. Cravings spark high and shout.',
       },
       {
-        overline: 'Breathe',
-        breath: true,
-        text: 'Take three slow breaths before anything else. An urge is a wave — it rises, crests, and passes whether you feed it or not.',
+        overline: 'Remember',
+        text: 'A day done right holds a stretch of hunger and a stretch out of breath. You planned to feel this. If this is that stretch, nothing is wrong — it’s working.',
       },
       {
-        overline: 'Ask',
-        text: 'When did you last eat? Hours ago — honor it with a real meal, eaten slowly. Recently — this is likely a feeling asking to be fed.',
+        overline: 'Breathe',
+        breath: true,
+        text: 'Three slow breaths. An urge is a wave — it rises, crests, and passes whether you feed it or not.',
+      },
+      {
+        overline: 'The fork',
+        identity: {
+          domain: 'Health',
+          vision: 'Lean, light, disciplined — hunger is a tool you use, not a voice you obey.',
+          antiVision: 'Never empty, always fed — softer every season, appetite in charge.',
+        },
+        text: 'Two versions of you are at this fork. This moment feeds one of them.',
       },
       {
         overline: 'Choose',
-        text: 'Drink a glass of water and wait ten minutes. If the hunger is still there, eat with attention and enjoy every bite.',
+        text: 'If a real meal is due, eat it slowly and enjoy every bite. If it isn’t time yet — water, stand up, move. Carry the hunger one more hour; it answers to you.',
       },
       {
         overline: 'Return',
-        text: 'You paused between urge and action. That pause is the skill — and a vote for the person you’re becoming.',
+        text: 'You felt it and didn’t flinch. Today has its hunger — and it obeyed you. Another vote for the person you’re becoming.',
       },
     ],
   },
