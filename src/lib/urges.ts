@@ -18,6 +18,8 @@ export type UrgeStep = {
    * are fallbacks until they've written their own.
    */
   identity?: { domain: string; vision: string; antiVision: string };
+  /** Physical things to do right now — the "Remediate" step. */
+  actions?: { emoji: string; label: string; note: string }[];
 };
 
 export type Urge = {
@@ -79,6 +81,17 @@ export const URGES: Urge[] = [
             'Submit to it: fed on every craving, heavy and low-energy — and the heart-disease pressure gets its opening.',
         },
         text: 'See both roads. Endure this hunger and you walk toward the first. Submit and you drift to the second. Which does this moment build?',
+      },
+      {
+        overline: 'Remediate',
+        text: 'If you’ll act, act without eating. Pick one and do it now:',
+        actions: [
+          { emoji: '💧', label: 'A full glass of water', note: 'Thirst impersonates hunger constantly.' },
+          { emoji: '🥤', label: 'Protein shake', note: '25g — the most filling thing you can drink.' },
+          { emoji: '🔥', label: 'Five minutes out of breath', note: 'Stairs, burpees, a sprint — blunts the craving fast.' },
+          { emoji: '☕', label: 'Black coffee or green tea', note: 'Appetite down, energy up.' },
+          { emoji: '🌿', label: 'Psyllium or vinegar in water', note: 'Fills the stomach with nothing to chew.' },
+        ],
       },
     ],
   },

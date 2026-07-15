@@ -98,6 +98,8 @@ export default function UrgeScreen() {
           ) : null}
 
           {current.identity ? <IdentityFork identity={current.identity} /> : null}
+
+          {current.actions ? <ActionList actions={current.actions} color={urge.color} /> : null}
         </Animated.View>
       </View>
 
@@ -129,6 +131,31 @@ function IdentityFork({ identity }: { identity: NonNullable<UrgeStep['identity']
         <Overline style={{ color: colors.decay }}>The inversion</Overline>
         <Text style={s.forkText}>{antiVision}</Text>
       </View>
+    </View>
+  );
+}
+
+/** The "Remediate" step: non-eating things to do right now for the hunger. */
+function ActionList({
+  actions,
+  color,
+}: {
+  actions: NonNullable<UrgeStep['actions']>;
+  color: string;
+}) {
+  return (
+    <View style={{ marginTop: sp(5), gap: sp(2.5) }}>
+      {actions.map((a) => (
+        <View key={a.label} style={s.actionRow}>
+          <View style={[s.actionEmoji, { backgroundColor: `${color}1C` }]}>
+            <Text style={{ fontSize: 18 }}>{a.emoji}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.actionLabel}>{a.label}</Text>
+            <Text style={s.actionNote}>{a.note}</Text>
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -188,6 +215,17 @@ const s = StyleSheet.create({
     color: colors.text,
     marginTop: sp(1.5),
   },
+  actionRow: { flexDirection: 'row', alignItems: 'center' },
+  actionEmoji: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: sp(3),
+  },
+  actionLabel: { fontFamily: font.sansSemi, fontSize: 15.5, color: colors.text },
+  actionNote: { fontFamily: font.sans, fontSize: 12.5, lineHeight: 17, color: colors.sub, marginTop: 1 },
   nameInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,
