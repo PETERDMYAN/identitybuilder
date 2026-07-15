@@ -40,33 +40,45 @@ export const URGES: Urge[] = [
     emoji: '🥣',
     color: colors.health,
     fallback: 'it',
-    // Peter's 4-step resolution: identify the acute mood → re-observe it as
-    // raw sensation until it turns neutral → acknowledge and appreciate it
-    // because it was chosen → the identity it serves.
+    // Peter's 7-step resolution: identify → get curious (Untethered Soul:
+    // watch it as the witness) → acknowledge → rationalize (chosen, good) →
+    // accept → appreciate → imagine both roads (endure vs submit).
     steps: [
       {
         overline: 'Identify',
-        text: 'What exactly is here right now? Hunger, a mood, restlessness dressed as appetite? Point at the acute feeling and name it.',
+        text: 'Turn toward it. There is a feeling here, and its name is hunger. Say it plainly: I am feeling hungry.',
       },
       {
-        overline: 'Observe',
+        overline: 'Get curious',
         breath: true,
-        text: 'Drop the story and re-observe it as pure sensation — its place, its size, its texture. Watched closely, it breaks into small flickers, and the flickers turn neutral.',
+        text: 'Sit back and watch it, the way you’d watch weather. Where does the hunger live — stomach, chest, throat? How big is it? Does it have an edge? You are the one watching. You are not the hunger.',
+      },
+      {
+        overline: 'Acknowledge',
+        text: 'Let it exist. Don’t push it away, don’t rush to fix it. Just nod to it: yes, you’re here.',
+      },
+      {
+        overline: 'Rationalize',
+        text: 'Remember why this is good. You chose this hunger — it’s the plan working, not a problem. And it’s amazing that you can feel it, sit with it, and stay in charge. The discipline you asked for, arriving on time.',
+      },
+      {
+        overline: 'Accept',
+        text: 'It’s okay to feel this. You don’t need it gone. A meal will come when it’s due — until then, this feeling can simply be here, and you can be fine.',
       },
       {
         overline: 'Appreciate',
-        text: 'Acknowledge it — it’s real. Then appreciate it: you chose this hunger, and it’s meaningful to you. Discomfort you chose is training, not suffering.',
+        text: 'Go further — be grateful for it. This is your body using its own reserves, becoming lighter and sharper. Thank the hunger. It’s on your side.',
       },
       {
-        overline: 'The identity',
+        overline: 'Imagine',
         identity: {
           domain: 'Health',
           vision:
-            'Healthy, high-energy, vegetarian — 68 kg, 13% body fat. I chose it, it’s meaningful to me. That’s my advantage.',
+            'Endure it: healthy, high-energy, vegetarian — 68 kg, 13% body fat. Lighter, sharper, in charge. I chose it. That’s my advantage.',
           antiVision:
-            'The drift: fed on every mood, low energy — and the heart disease in the pressure gets its opening.',
+            'Submit to it: fed on every craving, heavy and low-energy — and the heart-disease pressure gets its opening.',
         },
-        text: 'This is who the hunger works for. Chosen. Meaningful. Your advantage.',
+        text: 'See both roads. Endure this hunger and you walk toward the first. Submit and you drift to the second. Which does this moment build?',
       },
     ],
   },
