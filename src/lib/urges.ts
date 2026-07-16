@@ -84,7 +84,7 @@ export const URGES: Urge[] = [
       },
       {
         overline: 'Remediate',
-        text: 'If you’ll act, act without eating. Pick one and do it now:',
+        text: 'The honest test — would poached broccoli or a plate of Brussels sprouts sound good right now? If yes, you’re truly hungry: eat a real meal, slowly. If not, it’s a craving — do one of these instead:',
         actions: [
           { emoji: '💧', label: 'A full glass of water', note: 'Thirst impersonates hunger constantly.' },
           { emoji: '🥤', label: 'Protein shake', note: '25g — the most filling thing you can drink.' },
