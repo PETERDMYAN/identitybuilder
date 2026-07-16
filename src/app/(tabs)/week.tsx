@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   Body,
@@ -16,7 +16,15 @@ import {
   Title,
 } from '@/components/ui';
 import { fmtMultiplier } from '@/lib/compound';
-import { addDaysStr, fmtShort, fmtWeekRange, todayStr, weekDates, weekdayLetter } from '@/lib/dates';
+import {
+  addDaysStr,
+  fmtDayTitle,
+  fmtShort,
+  fmtWeekRange,
+  todayStr,
+  weekDates,
+  weekdayLetter,
+} from '@/lib/dates';
 import {
   useCurrentWeekStart,
   useGrowthBundle,
@@ -66,14 +74,33 @@ export default function WeekScreen() {
     return weekDates(week).map((date) => ({ date, count: byDate.get(date) ?? 0 }));
   }, [weekUrges, week]);
 
-  const urgeTotals = useMemo(
-    () =>
-      URGES.map((u) => ({
-        urge: u,
-        count: weekUrges.filter((e) => e.urge_id === u.id).length,
-      })).filter((t) => t.count > 0),
-    [weekUrges],
+  // null = whole week; a date string = that single day.
+  const [urgeDay, setUrgeDay] = useState<string | null>(null);
+  const scopedUrges = useMemo(
+    () => (urgeDay ? weekUrges.filter((u) => u.date === urgeDay) : weekUrges),
+    [weekUrges, urgeDay],
   );
+
+  // Group the actual logged events by id so every caught urge is represented —
+  // including any id no longer in the catalog (shown with a neutral fallback).
+  // The counts therefore always sum to the number in the card header.
+  const urgeBreakdown = useMemo(() => {
+    const meta = new Map(URGES.map((u) => [u.id, u]));
+    const byId = new Map<string, number>();
+    for (const u of scopedUrges) byId.set(u.urge_id, (byId.get(u.urge_id) ?? 0) + 1);
+    return [...byId.entries()]
+      .map(([id, count]) => {
+        const m = meta.get(id);
+        return {
+          id,
+          count,
+          emoji: m?.emoji ?? '•',
+          noun: m?.noun ?? id,
+          color: m?.color ?? colors.muted,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+  }, [scopedUrges]);
 
   const pastWeeks = useMemo(() => {
     const life = bundle?.growth.life ?? [];
@@ -136,7 +163,7 @@ export default function WeekScreen() {
       <Card>
         <Row between>
           <Overline>Urges caught</Overline>
-          <Sub>{weekUrges.length || '—'}</Sub>
+          <Sub>{scopedUrges.length || '—'}</Sub>
         </Row>
         {weekUrges.length > 0 ? (
           <>
@@ -144,35 +171,64 @@ export default function WeekScreen() {
               {urgeDays.map((d) => {
                 const isToday = d.date === today;
                 const future = d.date > today;
+                const selected = urgeDay === d.date;
                 return (
-                  <View key={d.date} style={[s.dayCell, future && { opacity: 0.35 }]}>
+                  <Pressable
+                    key={d.date}
+                    disabled={future || d.count === 0}
+                    onPress={() => setUrgeDay(selected ? null : d.date)}
+                    style={[s.dayCell, future && { opacity: 0.35 }]}
+                  >
                     <Tiny style={isToday ? { color: colors.text } : undefined}>
                       {weekdayLetter(d.date)}
                     </Tiny>
                     <View
                       style={[
                         s.dayBubble,
-                        d.count > 0 && {
-                          backgroundColor: colors.accentFaint,
-                          borderColor: colors.accentBright,
-                        },
+                        d.count > 0 &&
+                          !selected && {
+                            backgroundColor: colors.accentFaint,
+                            borderColor: colors.accentBright,
+                          },
+                        selected && { backgroundColor: colors.accent, borderColor: colors.accent },
                       ]}
                     >
-                      <Text style={s.dayCount}>{d.count || '·'}</Text>
+                      <Text style={[s.dayCount, selected && { color: '#FFFFFF' }]}>
+                        {d.count || '·'}
+                      </Text>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
             </Row>
-            <Row style={{ flexWrap: 'wrap', marginTop: sp(3), gap: sp(1.5) }}>
-              {urgeTotals.map(({ urge, count }) => (
-                <View key={urge.id} style={[s.urgePill, { borderColor: `${urge.color}55` }]}>
-                  <Text style={s.urgePillText}>
-                    {urge.emoji} {urge.noun} ×{count}
-                  </Text>
-                </View>
-              ))}
+
+            <Row between style={{ marginTop: sp(3) }}>
+              <Sub style={{ fontFamily: font.sansSemi, color: colors.text }}>
+                {urgeDay ? fmtDayTitle(urgeDay) : 'This week'}
+              </Sub>
+              {urgeDay ? (
+                <Pressable onPress={() => setUrgeDay(null)} hitSlop={8}>
+                  <Tiny style={{ color: colors.accentBright }}>Show week</Tiny>
+                </Pressable>
+              ) : (
+                <Tiny>Tap a day to filter</Tiny>
+              )}
             </Row>
+
+            {urgeBreakdown.length > 0 ? (
+              <Row style={{ flexWrap: 'wrap', marginTop: sp(2.5), gap: sp(1.5) }}>
+                {urgeBreakdown.map((u) => (
+                  <View key={u.id} style={[s.urgePill, { borderColor: `${u.color}55` }]}>
+                    <Text style={s.urgePillText}>
+                      {u.emoji} {u.noun} ×{u.count}
+                    </Text>
+                  </View>
+                ))}
+              </Row>
+            ) : (
+              <Sub style={{ marginTop: sp(2.5) }}>No urges caught that day.</Sub>
+            )}
+
             <Tiny style={{ marginTop: sp(2.5) }}>
               Every pause taken instead of a reaction. Catching the urge is the win.
             </Tiny>
