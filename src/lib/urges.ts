@@ -191,6 +191,88 @@ export const URGES: Urge[] = [
     ],
   },
   {
+    id: 'start-reading',
+    noun: 'Reading',
+    label: 'I don’t want to start reading',
+    emoji: '📖',
+    color: colors.knowledge,
+    fallback: 'reading',
+    steps: [
+      {
+        overline: 'Identify',
+        text: 'Notice what you’re actually avoiding. Not the reading — the starting. The resistance lives at the first page and nowhere else.',
+      },
+      {
+        overline: 'Get curious',
+        breath: true,
+        text: 'Watch the resistance like weather. Where does it sit? Notice it’s loudest right now, at the threshold — and that it has no power once a single page is behind you.',
+      },
+      {
+        overline: 'Reframe',
+        text: 'Motivation isn’t the entry fee. It arrives after the first page, never before. You don’t have to want it. You only have to open it.',
+      },
+      {
+        overline: 'The identity',
+        identity: {
+          domain: 'Knowledge',
+          vision: 'A reader — a few pages every day, compounding into a mind worth having.',
+          antiVision: 'Always meaning to, never starting — a stack of books and a scrolling thumb.',
+        },
+        text: 'Every page is a vote. This is who the pages build.',
+      },
+      {
+        overline: 'Begin',
+        text: 'Shrink it until it’s easy. Do one, right now:',
+        actions: [
+          { emoji: '📖', label: 'Open to any page', note: 'Just hold it open. The hard part is done.' },
+          { emoji: '📄', label: 'One paragraph', note: 'Read a single paragraph. Momentum takes it from there.' },
+          { emoji: '⏱️', label: 'Two minutes', note: 'Set a timer. You may stop when it rings — you won’t.' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'start-exercise',
+    noun: 'Exercise',
+    label: 'It’s tiring to start exercising',
+    emoji: '🏃',
+    color: colors.health,
+    fallback: 'the workout',
+    steps: [
+      {
+        overline: 'Identify',
+        text: 'That tiredness is a forecast, not a fact. You’re feeling the workout you imagined, not the one you’ve done. Name it: I don’t want to begin.',
+      },
+      {
+        overline: 'Get curious',
+        breath: true,
+        text: 'Find the heaviness. Where does it sit? It’s densest before the first move — and it burns off inside the first two minutes of actually moving.',
+      },
+      {
+        overline: 'Reframe',
+        text: 'Energy is made by moving, not saved by resting. You don’t wait to feel strong and then move — you move, and the strength comes. The body follows the first rep.',
+      },
+      {
+        overline: 'The identity',
+        identity: {
+          domain: 'Health',
+          vision: 'Strong and light — someone who moves daily and runs on the energy it makes.',
+          antiVision: 'Always too tired to start — stiffer and heavier every season it wins.',
+        },
+        text: 'This is who the first rep builds.',
+      },
+      {
+        overline: 'Begin',
+        text: 'Don’t commit to the workout. Commit to the smallest start:',
+        actions: [
+          { emoji: '👟', label: 'Just the shoes', note: 'Put them on. Nothing more required yet.' },
+          { emoji: '🔟', label: 'Ten reps', note: 'One tiny set. The body wakes and asks for more.' },
+          { emoji: '⏱️', label: 'Two minutes', note: 'Move for 120 seconds. Quit after — if you still want to.' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'indulge',
     noun: 'Indulgence',
     label: 'I am compelled to indulge in …',
